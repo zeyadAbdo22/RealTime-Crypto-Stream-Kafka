@@ -64,14 +64,12 @@ pip install -r requirements.txt
 
 **`requirements.txt`:**
 ```
-fastapi>=0.68.0
-uvicorn>=0.15.0
-python-socketio>=5.0.0
-aiokafka>=0.7.0
-aiohttp>=3.7.0
-```
+- fastapi>=0.68.0
+- uvicorn>=0.15.0
+- python-socketio>=5.0.0
+- aiokafka>=0.7.0
+- aiohttp>=3.7.0
 
-```
 ### 3. Run Backend Services (in separate terminals)
 ```bash
 # Producer Server (Port 4000)
