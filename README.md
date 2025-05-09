@@ -1,34 +1,53 @@
-# Real-Time Crypto Price Tracker
 
-A streaming application that displays real-time Bitcoin and Ethereum prices using Kafka, FastAPI, and React.
+# Real-Time Crypto Dashboard with Kafka
+
+This project demonstrates a real-time cryptocurrency price tracking system with separate producer and consumer interfaces.
+
+---
 
 ## Features
 
-- Real-time price updates every 10 seconds  
-- WebSocket-based communication  
-- Kafka message broker for reliable data streaming  
-- Clean React frontend interface  
-- Connection status monitoring  
+- **Dual Dashboard System**  
+  -  *Producer Dashboard*: Displays data sent to Kafka  
+  -  *Consumer Dashboard*: Displays data received from Kafka
+-  WebSocket-based real-time updates  
+-  Kafka message broker for reliable data streaming  
+-  Isolated frontend interfaces for each component  
 
-## System Architecture
+---
+
+##  System Architecture
 
 ```
-+-------------+    +------------+    +------------+    +-----------+    +----------+
-| CoinGecko   |    | Kafka      |    | FastAPI    |    | React     |    | Browser  |
-| API         +--> + Producer   +--> + Broker     +--> + WebSocket +--> + Client   |
-| (BTC/ETH)   |    | (Python)   |    | (Docker)   |    | Server    |    | (React)  |
-+-------------+    +------------+    +------------+    +-----------+    +----------+
++-------------+     +------------+     +------------+     +-----------------+
+|  CoinGecko  +-->  |  Producer  +-->  |   Kafka    +-->  |    Consumer     |
+|   API       |     |  Server    |     |  Broker    |     |     Server      |
+| (BTC/ETH)   |     |  (Port 4000)    | (Docker)   |     |   (Port 4001)   |
++-------------+     +------------+     +------------+     +--------+--------+
+                                                                     ↓
+          +-------------------+     +-------------------+     +-------------------+
+          | Producer Frontend |     | Consumer Frontend |     | Docker Containers |
+          |  (React - 3000)   |     |  (React - 3001)   |     | Zookeeper/Kafka   |
+          +-------------------+     +-------------------+     +-------------------+
 ```
 
-## Prerequisites
+---
 
-- Docker and Docker Compose  
-- Python 3.7+  
-- Node.js 16+ and npm/yarn  
+## 🔧 Prerequisites
 
-## Setup Instructions
+- [Docker & Docker Compose](https://www.docker.com/)  
+- Python 3.8+  
+- Node.js 16+ & npm  
 
-### 1. Create and activate virtual environment
+---
+
+##  Setup Instructions
+
+### 1. Start Kafka Infrastructure
+```bash
+docker-compose up -d
+```
+### 1. virtual environment and Install Python Dependencies
 
 ```bash
 # Create virtual environment
@@ -40,113 +59,103 @@ source .venv/bin/activate
 # Activate it (Windows)
 source .venv/Scripts/activate
 
-```
-
-### 2. Install Python dependencies
-
-Make sure your virtual environment (`.venv`) is activated before installing the dependencies.
-
-```bash
-# Activate it (Linux/Mac)
-source .venv/bin/activate
-
-# Or activate it (Windows)
-source .venv/Scripts/activate
-
-# Then install dependencies
+# For install Library
 pip install -r requirements.txt
+
+**`requirements.txt`:**
+```
+fastapi>=0.68.0
+uvicorn>=0.15.0
+python-socketio>=5.0.0
+aiokafka>=0.7.0
+aiohttp>=3.7.0
 ```
 
-**requirements.txt contents:**
 ```
-aiokafka
-aiohttp
-python-socketio
-fastapi
-uvicorn
-```
-
-### 3. Install frontend dependencies
-
+### 3. Run Backend Services (in separate terminals)
 ```bash
-cd frontend
+# Producer Server (Port 4000)
+python producer-server.py
+
+# Consumer Server (Port 4001)
+python consumer-server.py
+```
+
+### 4. Setup Frontends
+
+#### Producer Frontend
+```bash
+cd producer-frontend
 npm install
+npm run dev  # Runs on port 3000
 ```
 
-### 4. Start the infrastructure
-
+#### Consumer Frontend
 ```bash
-docker-compose up -d
+cd consumer-frontend
+npm install
+npm run dev  # Runs on port 3001
+```
+---
+
+##  Access the Dashboards
+
+- **Producer Dashboard**: [http://localhost:3000](http://localhost:3000)  
+- **Consumer Dashboard**: [http://localhost:3001](http://localhost:3001)
+
+---
+
+##  Project Structure
+
+```
+crypto-kafka-dashboard/
+├── producer-frontend/       # React app for producer
+│   └── src/
+│       ├── App.jsx          # Producer UI component
+│       └── main.jsx         # Producer entry point
+├── consumer-frontend/       # React app for consumer
+│   └── src/
+│       ├── App.jsx          # Consumer UI component
+│       └── main.jsx         # Consumer entry point
+├── backend/
+│   ├── producer-server.py   # Producer WebSocket server
+│   └── consumer-server.py   # Consumer WebSocket server
+└── docker-compose.yml       # Kafka and Zookeeper setup
 ```
 
-## Running the Application
+---
 
-Run these commands in separate terminal windows/tabs:
+##  Key Differences from Original
 
-### Start the WebSocket server:
+- **Separate Frontends**:  
+  Isolated React apps for producer and consumer on ports `3000` and `3001`
 
+- **Dedicated Servers**:  
+  Producer server (`4000`) sends data, consumer server (`4001`) receives
+
+- **Clear Data Flow**:  
+  - *Producer Path*: API → Kafka → Producer UI  
+  - *Consumer Path*: Kafka → Consumer UI
+
+---
+
+##  Troubleshooting
+
+### Kafka Connection Problems
 ```bash
-python server.py
+# Check if Kafka is running
+docker ps -a
+
+# View Kafka logs
+docker logs kafka
 ```
 
-### Start the Kafka producer:
+### WebSocket Errors
 
-```bash
-python producer.py
-```
+- Ensure both servers are running (ports `4000` & `4001`)
+- Check for CORS configuration in backend servers
 
-### Start the Kafka consumer:
+### Frontend Not Updating
 
-```bash
-python consumer.py
-```
-
-### Start the React frontend:
-
-```bash
-cd frontend
-npm run dev
-```
-
-## Accessing the Application
-
-Open your browser at:
-
-[http://localhost:3000](http://localhost:3000)
-
-## Project Structure
-
-```
-crypto-tracker/
-├── .venv/                 # Python virtual environment
-├── frontend/              # React application
-│   ├── src/
-│   │   ├── App.jsx        # Main React component
-│   │   ├── main.jsx       # React entry point
-│   ├── index.html         # HTML template
-├── docker-compose.yml     # Kafka and Zookeeper setup
-├── producer.py            # Kafka producer
-├── consumer.py            # Kafka consumer
-├── server.py              # WebSocket server
-├── requirements.txt       # Python dependencies
-```
-
-## Troubleshooting
-
-### Kafka connection issues:
-- Verify Docker containers are running:  
-  ```bash
-  docker ps
-  ```
-- Check Kafka logs:  
-  ```bash
-  docker logs kafka
-  ```
-
-### WebSocket connection problems:
-- Ensure the server is running on port `4000`
-- Check CORS settings in `server.py`
-
-### Frontend not updating:
-- Verify all backend services are running
-- Check browser console for errors
+- Verify frontend is using the correct ports
+- Open browser console for any WebSocket or CORS errors
